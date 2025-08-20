@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "conflict_collection"
+version = "0.0.1a0"
+description = "Data collection from Git merge conflicts."
+requires-python = ">=3.10"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Jinu Jang"}
+]
+keywords = ["git", "merge", "conflict", "parser", "version-control"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Text Processing :: Filters",
+]
+dependencies = [
+    "conflict_parser",
+    "GitPython",
+    "pydantic"
+]
+
+[project.urls]
+Homepage = "https://github.com/jinu-jang/conflict-collection"
+Repository = "https://github.com/jinu-jang/conflict-collection.git"
+Issues = "https://github.com/jinu-jang/conflict-collection/issues"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "pytest",
+]
+
+[tool.isort]
+profile = "black"
