@@ -5,12 +5,7 @@ from typing import Iterable, Optional
 
 from git import Repo
 
-from conflict_collection.models.social_signals import (
-    BlameEntry,
-    IntegratorPriors,
-    SocialSignalsRecord,
-)
-from conflict_collection.societal._git_ops import (
+from conflict_collection.collectors.societal._git_ops import (
     age_days,
     blame_aggregate,
     commit_author_str,
@@ -22,6 +17,11 @@ from conflict_collection.societal._git_ops import (
     last_commit_for_path,
     merge_bases,
     rev_parse,
+)
+from conflict_collection.schema.social_signals import (
+    BlameEntry,
+    IntegratorPriors,
+    SocialSignalsRecord,
 )
 
 

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from conflict_collection.societal import collect
+from conflict_collection.collectors.societal import collect
 
 
 def test_no_exception_thrown_societal_collection(conflict_repo_path: Path):

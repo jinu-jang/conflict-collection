@@ -28,7 +28,8 @@ classifiers = [
 dependencies = [
     "conflict_parser",
     "GitPython",
-    "pydantic"
+    "pydantic",
+    "python-Levenshtein",
 ]
 
 [project.urls]
