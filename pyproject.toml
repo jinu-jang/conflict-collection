@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "conflict_collection"
-version = "0.0.1a0"
+version = "0.0.1"
 description = "Data collection from Git merge conflicts."
 requires-python = ">=3.10"
 readme = "README.md"
@@ -51,3 +51,14 @@ docs = [
 
 [tool.isort]
 profile = "black"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/pyproject.toml",
+  "/README.md",
+  "/LICENSE",
+  "/conflict_collection/**",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["conflict_collection"]
