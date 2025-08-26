@@ -1,6 +1,6 @@
 # API: collect societal signals
 
-::: conflict_collection.collectors.conflict_type.societal
+::: conflict_collection.collectors.societal
     options:
       members:
         - collect

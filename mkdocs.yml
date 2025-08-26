@@ -41,7 +41,6 @@ markdown_extensions:
 
 plugins:
   - search
-  - section-index
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -70,7 +69,7 @@ nav:
   - API Reference:
       - conflict_collection.collectors.conflict_type: api/collect_conflict_types.md
       - conflict_collection.collectors.societal: api/collect_societal_signals.md
-      - conflict_collection.metrics.anchored_ratio.anchored_ratio: api/anchored_ratio_func.md
+      - conflict_collection.metrics.anchored_ratio: api/anchored_ratio_func.md
       - conflict_collection.schema.five_tuple: api/five_tuple_model.md
       - conflict_collection.schema.typed_five_tuple: api/typed_five_tuple_models.md
       - conflict_collection.schema.social_signals: api/social_signals_models.md

@@ -1,5 +1,7 @@
+from typing import Optional
+
 from conflict_parser import MergeMetadata
-from git import Optional, Repo
+from git import Repo
 
 from conflict_collection.collectors.conflict_type._git_ops import (
     group_conflict_families,
