@@ -45,3 +45,10 @@ class SocialSignalsRecord(BaseModel):
 
     blame_table: List[BlameEntry]
     """Aggregated blame table at `HEAD`, grouped by author."""
+
+
+__all__ = [
+    "BlameEntry",
+    "IntegratorPriors",
+    "SocialSignalsRecord",
+]

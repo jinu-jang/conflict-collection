@@ -21,17 +21,26 @@ from conflict_collection.schema.typed_five_tuple import (
 def collect(
     repo_path: str, resolution_sha: str, merge_config: Optional[MergeMetadata] = None
 ) -> list[ConflictCase]:
-    """
-    Read the raw unmerged index ('git ls-files -u') and aggregate the
-    three stages that belong to the "same file".
+    """Collect typed merge conflict cases.
+
+    Reads the raw unmerged index (``git ls-files -u``) and groups index stages
+    (1=base, 2=ours, 3=theirs) into logical "conflict families". Each family
+    is normalised into one of the dataclass variants from
+    :mod:`conflict_collection.schema.typed_five_tuple`.
+
+    Skips files that Git internally marks as conflicted but whose working tree
+    contents no longer contain conflict markers (auto-resolved edge cases).
 
     Args:
-        repo_path: The file system path to the Git repository.
-        resolution_sha: The commit SHA representing the resolution state.
-        merge_config: Optional metadata about the merge configuration.
+        repo_path: Filesystem path to a Git repository currently in a merge-conflict state.
+        resolution_sha: Commit SHA representing the resolved state (used to retrieve final blob content).
+        merge_config: Optional merge metadata (used to validate marker size / style).
 
     Returns:
-        A list of ConflictCase objects representing the detected conflicts.
+        List of typed ``ConflictCase`` instances.
+
+    Raises:
+        ValueError: If expected blobs/paths are missing for a detected conflict shape.
     """
     repo = Repo(repo_path)
 

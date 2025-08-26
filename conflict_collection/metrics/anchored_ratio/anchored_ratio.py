@@ -1,6 +1,22 @@
-"""
-Implements a 3-way similarity ratio.
-Checks similarity of the edits from two edited versions (R, R_hat) against a base (O).
+"""Anchored 3-way similarity ratio.
+
+The :func:`anchored_ratio` function computes a normalised similarity score in ``[0,1]``
+between two edited versions (``R`` and ``R_hat``) with respect to a common base ``O``.
+It jointly reasons about:
+
+* Base-anchored change intervals (replacements / expansions / compressions)
+* Insertions at base slots
+* Optional per-line Levenshtein similarity for partial replacements
+
+Design goals:
+
+1. Reward agreement only inside regions where at least one side changed.
+2. Distinguish identical insertions in the same slot from insertions in different slots.
+3. Provide a tunable granularity (exact-only vs Levenshtein) without changing semantics.
+4. Define the degenerate case (no changes) as 1.0 for stability.
+
+This is useful for evaluating convergence of independent merge resolution attempts
+or measuring how close an automated merge is to a human resolution.
 """
 
 from difflib import SequenceMatcher

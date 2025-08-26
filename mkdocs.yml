@@ -1,0 +1,78 @@
+site_name: Conflict Collection
+site_description: Data collection toolkit for Git merge conflicts (types, social signals, metrics)
+site_url: https://jinu-jang.github.io/conflict-collection
+repo_url: https://github.com/jinu-jang/conflict-collection
+repo_name: jinu-jang/conflict-collection
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.code.select
+    - content.action.edit
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - section-index
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            docstring_style: google
+            merge_init_into_class: true
+            separate_signature: true
+            show_signature: true
+            show_if_no_docstring: true
+            filters: public
+
+nav:
+  - Overview: index.md
+  - Quick Start: quickstart.md
+  - Collectors:
+      - Conflict Types: collectors/conflict_types.md
+      - Societal Signals: collectors/societal.md
+  - Metrics:
+      - Anchored Ratio: metrics/anchored_ratio.md
+  - Data Models:
+      - Conflict 5-Tuple: models/five_tuple.md
+      - Typed Conflict Cases: models/typed_conflict_cases.md
+      - Social Signals: models/social_signals.md
+  - API Reference:
+      - conflict_collection.collectors.conflict_type: api/collect_conflict_types.md
+      - conflict_collection.collectors.societal: api/collect_societal_signals.md
+      - conflict_collection.metrics.anchored_ratio.anchored_ratio: api/anchored_ratio_func.md
+      - conflict_collection.schema.five_tuple: api/five_tuple_model.md
+      - conflict_collection.schema.typed_five_tuple: api/typed_five_tuple_models.md
+      - conflict_collection.schema.social_signals: api/social_signals_models.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md

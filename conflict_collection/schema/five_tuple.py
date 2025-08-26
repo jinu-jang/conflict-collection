@@ -37,3 +37,6 @@ class Conflict5Tuple(BaseModel):
 
     Reference [Git - merge-config Documentation](https://git-scm.com/docs/merge-config#Documentation/merge-config.txt-mergeconflictStyle)
     """
+
+
+__all__ = ["Conflict5Tuple"]
