@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from conflict_collection.conflict_type import collect
+from conflict_collection.collectors.conflict_type import collect
 
 
 def test_no_exception_thrown_conflict_type_collection(conflict_repo_path: Path):

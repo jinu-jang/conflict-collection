@@ -1,12 +1,12 @@
 from conflict_parser import MergeMetadata
 from git import Optional, Repo
 
-from conflict_collection.conflict_type._git_ops import (
+from conflict_collection.collectors.conflict_type._git_ops import (
     group_conflict_families,
     read_blob,
     read_worktree_file,
 )
-from conflict_collection.models.typed_five_tuple import (
+from conflict_collection.schema.typed_five_tuple import (
     AddAddConflictCase,
     AddedByThemConflictCase,
     AddedByUsConflictCase,
