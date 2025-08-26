@@ -43,6 +43,11 @@ dev = [
     "isort",
     "pytest",
 ]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
 
 [tool.isort]
 profile = "black"

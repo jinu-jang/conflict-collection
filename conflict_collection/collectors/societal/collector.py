@@ -29,9 +29,21 @@ def collect(
     repo_path: str = ".",
     files: Optional[Iterable[str]] = None,
 ) -> dict[str, SocialSignalsRecord]:
-    """
-    Collect social-signal metrics for conflicted files (or explicit files).
-    Returns a dictionary mapping from file path to SocialSignalsRecord.
+    """Collect ownership & social signal metrics for conflicted files.
+
+    By default operates on the set of currently conflicted files (from the
+    in-progress merge). An explicit ``files`` iterable can be supplied to
+    target arbitrary paths.
+
+    Signals include recency (age in days), author commit counts since merge
+    bases, integrator prior activity, and an aggregated blame table.
+
+    Args:
+        repo_path: Filesystem path to the repository (defaults to current directory).
+        files: Optional iterable of repo-relative file paths; if omitted, only conflicted files are used.
+
+    Returns:
+        Mapping of file path to :class:`SocialSignalsRecord`.
     """
     repo = Repo(repo_path)
 
