@@ -110,33 +110,33 @@ def test_anchored_ratio_expansion_vs_compression_same_region():
 def test_anchored_ratio_contained_change_equal_insertion():
     O = "\n".join(
         [
+            "line0",
             "line1",
             "line2",
             "line3",
             "line4",
-            "line5",
         ]
     )
     R = "\n".join(
         [
-            "line1",
+            "line0",
+            "line111",
+            "line122",
             "line222",
-            "line233",
             "line333",
-            "line444",
-            "line5",
-            "line66",
+            "line4",
+            "line55",
         ]
     )
     R_hat = "\n".join(
         [
-            "line1",
-            "line45",
-            "line211",
-            "line333",
+            "line0",
+            "line34",
+            "line100",
+            "line222",
+            "line3",
             "line4",
-            "line5",
-            "line66",
+            "line55",
         ]
     )
     score = anchored_ratio(O, R, R_hat, use_line_levenshtein=False)
@@ -281,3 +281,103 @@ def test_anchored_ratio_pure_insertions_one_common_one_unique():
     assert (
         1 / 2 <= granular_score <= 1
     ), f"Using Levenshtein, expected score in [1/2, 1], got {granular_score}"
+
+
+def test_anchored_ratio_empty_lines_are_ignored_1():
+    O = r"""BUILD_PASS3_CONSUMES= \
+
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider.resources|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider-comreg|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools.resources|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools-gc|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries.resources|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibrariesfeature|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events.resources|PASS3 \
+
+    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csineutralrepository|PASS3 \
+
+    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csiresourcerepositories|PASS3 \
+
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-events|PASS3 \
+
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon|PASS3 \
+
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon.resources|PASS3 \
+
+
+
+"""
+    R = r"""BUILD_PASS3_CONSUMES= \
+
+    inetsrv\iis\setup\mbs\compile\microsoft-windows-iis-managementscriptingtools-deployment|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools-gc|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools.resources|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries.resources|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibrariesfeature|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events.resources|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider-comreg|PASS3 \
+
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider.resources|PASS3 \
+
+    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csineutralrepository|PASS3 \
+
+    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csiresourcerepositories|PASS3 \
+
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-events|PASS3 \
+
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon|PASS3 \
+
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon.resources|PASS3
+
+
+
+"""
+
+    R_hat = r"""BUILD_PASS3_CONSUMES= \
+    inetsrv\iis\setup\mbs\compile\microsoft-windows-iis-managementscriptingtools-deployment|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools-gc|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools.resources|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries.resources|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibrariesfeature|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events.resources|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider-comreg|PASS3 \
+    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider.resources|PASS3 \
+    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csineutralrepository|PASS3 \
+    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csiresourcerepositories|PASS3 \
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-events|PASS3 \
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon|PASS3 \
+    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon.resources|PASS3"""
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert score == 1.0, "Expected 0 ÷ 0 → 1.0 when no one changes anything"

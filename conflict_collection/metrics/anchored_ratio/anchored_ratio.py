@@ -302,9 +302,7 @@ def anchored_ratio(
             R_hat_piece = _project_base_subrange_to_target(
                 O_vs_R_hat, R_hat_lines, micro_start, micro_end
             )
-            denominator_base += max(
-                micro_end - micro_start, len(R_piece), len(R_hat_piece)
-            )
+            denominator_base += max(len(R_piece), len(R_hat_piece))
 
     # ---- Numerator (base-changes) via WHOLE-block alignment on EXPANDED projections
     numerator_base: float = 0.0
