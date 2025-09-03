@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/conflict-collection.svg)](https://badge.fury.io/py/conflict-collection)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python Versions](https://img.shields.io/pypi/pyversions/conflict-collection.svg)](https://pypi.org/project/conflict-collection/)
-[![Status](https://img.shields.io/badge/status-beta-blue.svg)](#status)
+[![Downloads](https://pepy.tech/badge/conflict-collection)](https://pepy.tech/project/conflict-collection)
 
 > Data collection toolkit for Git merge conflicts: structural types, social signals, and similarity metrics.
 

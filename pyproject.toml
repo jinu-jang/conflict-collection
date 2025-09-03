@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "conflict_collection"
-version = "0.0.1"
+version = "0.0.2"
 description = "Data collection from Git merge conflicts."
 requires-python = ">=3.10"
 readme = "README.md"
