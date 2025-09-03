@@ -1,3 +1,5 @@
+import pytest
+
 from conflict_collection.metrics.anchored_ratio import anchored_ratio
 
 
@@ -543,3 +545,85 @@ def test_anchored_ratio_delete_vs_edit_6():
     assert (
         score == 1 / 3
     ), "Expected 1 ÷ 3 → 0.3333. 1 same delete out of 3 changed lines"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# A) Mutual deletes via delete vs compression (2/3 numerator)
+#    R deletes 3 lines; R̂ compresses those 3 base lines into 1 line.
+#    Mutual-delete credit on two of the three base lines (first two slices empty).
+#    Denominator (base)=3, Numerator (base)=2 → 2/3
+# ──────────────────────────────────────────────────────────────────────────────
+def test_anchored_ratio_mutual_deletes_via_compression_vs_delete_2_of_3():
+    O = "A\nB\nC\nD\nE"
+    R = "A\nE"  # delete B,C,D
+    R_hat = "A\nX\nE"  # replace B,C,D with single 'X' (compression)
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=False)
+    expected = 2 / 3
+    assert _is_about(score, expected), f"Expected 2 ÷ 3 = {expected}, got {score}"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# C) Two shared equal lines inside the changed block, shifted in order
+#    Whole-block alignment finds 'K1' and 'K2' => numerator 2; denom 3 => 2/3
+# ──────────────────────────────────────────────────────────────────────────────
+@pytest.mark.skip(reason="Potentially wanted behavior, needs further discussion")
+def test_anchored_ratio_two_shared_lines_shifted_inside_block():
+    O = "a0\na1\na2\na3\na4"
+    R = "a0\nK1\nX\nK2\na4"  # replace [1,4) -> [K1, X, K2]
+    R_hat = "a0\nK1\nK2\nY\na4"  # replace [1,4) -> [K1, K2, Y]
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=False)
+    expected = 2 / 3
+    assert _is_about(score, expected), f"Expected 2 ÷ 3 = {expected}, got {score}"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# D) Insertions in the same slot with one side having an extra trailing line
+#    Insertion denom = max(3,2)=3; insertion numerator = 2 (I1, I2) -> 2/3
+# ──────────────────────────────────────────────────────────────────────────────
+def test_anchored_ratio_insertions_same_slot_extra_trailing():
+    O = "A\nB"
+    R = "A\nI1\nI2\nI3\nB"
+    R_hat = "A\nI1\nI2\nB"
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=False)
+    expected = 2 / 3
+    assert _is_about(score, expected), f"Expected 2 ÷ 3 = {expected}, got {score}"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# F) Duplicates inside the block: LCS/SequenceMatcher should match two items
+#    R: [K, X, K], R̂: [K, K, X] -> equal count 2 -> 2/3
+# ──────────────────────────────────────────────────────────────────────────────
+def test_anchored_ratio_duplicates_inside_block_count_both_matches():
+    O = "a0\na1\na2\na3"
+    R = "a0\nK\nX\nK"
+    R_hat = "a0\nK\nK\nX"
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=False)
+    expected = 2 / 3
+    assert _is_about(score, expected), f"Expected 2 ÷ 3 = {expected}, got {score}"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# G) Two disjoint union blocks; only the first has a shared equal line
+#    Block1: [1,3) -> [K1, X] vs [K1, Y] => +1
+#    Block2: [4,5) -> U vs V => +0
+#    Denom = 2 + 1 = 3, Numerator = 1 -> 1/3
+# ──────────────────────────────────────────────────────────────────────────────
+def test_anchored_ratio_two_union_blocks_only_one_matches():
+    O = "A\nB\nC\nD\nE\nF"
+    R = "A\nK1\nX\nD\nU\nF"  # [1,3)->[K1,X], [4,5)->[U]
+    R_hat = "A\nK1\nY\nD\nV\nF"  # [1,3)->[K1,Y], [4,5)->[V]
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=False)
+    expected = 1 / 3
+    assert _is_about(score, expected), f"Expected 1 ÷ 3 = {expected}, got {score}"
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# H) Levenshtein-only partial credit for a single edited line
+#    Classic "kitten" vs "sitting" -> ratio ≈ 10/13 ≈ 0.7692 (numerator=that; denom=1)
+# ──────────────────────────────────────────────────────────────────────────────
+def test_anchored_ratio_levenshtein_partial_credit_single_line_edit():
+    O = "a\nb\nc"
+    R = "a\nkitten\nc"
+    R_hat = "a\nsitting\nc"
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert _is_about(score, 0.6153, tol=1e-4), f"Expected ~0.6153, got {score}"
