@@ -1,22 +1,17 @@
 """Anchored 3-way similarity ratio.
 
-The :func:`anchored_ratio` function computes a normalised similarity score in ``[0,1]``
-between two edited versions (``R`` and ``R_hat``) with respect to a common base ``O``.
+The :func:`anchored_ratio` function computes a normalised similarity score in [0,1]
+between two edited versions (R and R_hat) with respect to a common base O.
 It jointly reasons about:
-
 * Base-anchored change intervals (replacements / expansions / compressions)
 * Insertions at base slots
 * Optional per-line Levenshtein similarity for partial replacements
 
 Design goals:
-
 1. Reward agreement only inside regions where at least one side changed.
 2. Distinguish identical insertions in the same slot from insertions in different slots.
 3. Provide a tunable granularity (exact-only vs Levenshtein) without changing semantics.
 4. Define the degenerate case (no changes) as 1.0 for stability.
-
-This is useful for evaluating convergence of independent merge resolution attempts
-or measuring how close an automated merge is to a human resolution.
 """
 
 from difflib import SequenceMatcher
@@ -51,7 +46,6 @@ def _line_similarity(a: str, b: str, use_line_levenshtein: bool) -> float:
         return 1.0
     if not use_line_levenshtein:
         return 0.0
-
     return float(levenshtein_ratio(a, b))
 
 
@@ -120,33 +114,6 @@ def _merged_union_change_intervals(
     return merged
 
 
-def _micro_boundaries_for_union(
-    merged_union_intervals: list[Tuple[int, int]],
-    O_vs_R: list[Tuple[Tag, int, int, int, int]],
-    O_vs_R_hat: list[Tuple[Tag, int, int, int, int]],
-) -> list[Tuple[int, int, list[int]]]:
-    """
-    For each merged union interval [union_start, union_end), collect micro-boundaries:
-      {union_start, opcode boundaries strictly inside, union_end}.
-    These micro-intervals are used only for denominator accounting.
-    """
-    results: list[Tuple[int, int, list[int]]] = []
-    for union_start, union_end in merged_union_intervals:
-        boundary_points = {union_start, union_end}
-        for tag, base_start, base_end, _, _ in O_vs_R:
-            if union_start < base_start < union_end:
-                boundary_points.add(base_start)
-            if union_start < base_end < union_end:
-                boundary_points.add(base_end)
-        for tag, base_start, base_end, _, _ in O_vs_R_hat:
-            if union_start < base_start < union_end:
-                boundary_points.add(base_start)
-            if union_start < base_end < union_end:
-                boundary_points.add(base_end)
-        results.append((union_start, union_end, sorted(boundary_points)))
-    return results
-
-
 def _project_base_subrange_to_target(
     O_vs_target: list[Tuple[Tag, int, int, int, int]],
     target_lines: list[str],
@@ -191,44 +158,6 @@ def _project_base_subrange_to_target(
     return projected_output
 
 
-def _expanded_projections_for_union(
-    O_vs_target: list[Tuple[Tag, int, int, int, int]],
-    target_lines: list[str],
-    merged_union_intervals: list[Tuple[int, int]],
-) -> list[Tuple[int, int, list[str]]]:
-    """
-    For each merged union block [union_start, union_end), precompute the FULL projected slice
-    (concatenating across opcodes). These are used:
-      (a) as whole-block inputs to the numerator alignment,
-      (b) for proportional cutting into micro-slices if needed.
-    """
-    expanded_projections: list[Tuple[int, int, list[str]]] = []
-    for union_start, union_end in merged_union_intervals:
-        full_projection = _project_base_subrange_to_target(
-            O_vs_target, target_lines, union_start, union_end
-        )
-        expanded_projections.append((union_start, union_end, full_projection))
-    return expanded_projections
-
-
-def _slice_from_expanded_projection(
-    expanded_projection: Tuple[int, int, list[str]],
-    base_slice_start: int,
-    base_slice_end: int,
-) -> list[str]:
-    """
-    Cut [base_slice_start, base_slice_end) out of a pre-expanded union block proportionally.
-    """
-    union_start, union_end, full_projected_lines = expanded_projection
-    projected_length = len(full_projected_lines)
-    union_span = union_end - union_start
-    if union_span <= 0:
-        return []
-    projected_from = ((base_slice_start - union_start) * projected_length) // union_span
-    projected_to = ((base_slice_end - union_start) * projected_length) // union_span
-    return full_projected_lines[projected_from:projected_to]
-
-
 # ----------------------------
 # Insertions per base slot
 # ----------------------------
@@ -243,7 +172,7 @@ def _build_insertions_map(
     A slot index i means “before base line i” (0..N) where N is len(base).
     """
     insertions_by_slot: Dict[int, list[str]] = {}
-    for tag, base_start, base_end, target_start, target_end in O_vs_target:
+    for tag, base_start, _, target_start, target_end in O_vs_target:
         if tag == "insert":
             insertions_by_slot.setdefault(base_start, []).extend(
                 target_lines[target_start:target_end]
@@ -262,17 +191,24 @@ def anchored_ratio(
     """
     3-way anchored line similarity ratio in [0,1] for two edited versions (R, R_hat) against a base O.
 
-    Denominator =
-        sum over micro-boundaries (inside each merged union block [union_start, union_end)) of
-            max( base_span_len, len(R_piece), len(R_hat_piece) )
-      + sum over insertion slots of max( #insertions_R, #insertions_R_hat )
+    Denominator (base-changes) =
+        sum over EACH base line i in each merged union block [union_start, union_end)
+            max( 1, len(R_piece_i), len(R_hat_piece_i) )
+      where R_piece_i and R_hat_piece_i are projections of [i, i+1) into R and R_hat.
 
-    Numerator =
-        sum over merged union blocks [union_start, union_end) of aligned score between the FULL projected slices
-        (re-align R[union_block] vs R_hat[union_block] with SequenceMatcher; equal lines = 1, replace = per-line sim)
-      + sum over insertion slots of aligned score between inserted lines
+    Numerator (base-changes) =
+        (A) sum over base lines i in union blocks:
+              +1 if len(R_piece_i)==0 and len(R_hat_piece_i)==0  (mutual delete/compress)
+        PLUS
+        (B) sum over union blocks:
+              aligned score between FULL projected slices of the whole block
+              (captures content equality even when it shifts across micro-slices)
 
-    If denom == 0, returns 1.0 (no changes by either side).
+    Insertions (per slot):
+      - Denominator += max(#ins_R, #ins_Rhat)
+      - Numerator   += aligned score between inserted lines
+
+    If total denominator == 0, returns 1.0.
     """
     if R == R_hat:
         return 1.0
@@ -281,69 +217,65 @@ def anchored_ratio(
     R_lines: list[str] = _remove_empty_lines(R)
     R_hat_lines: list[str] = _remove_empty_lines(R_hat)
 
-    # Opcodes O vs R and O vs R_hat
+    # Opcodes
     O_vs_R = _opcodes(base_lines, R_lines)
     O_vs_R_hat = _opcodes(base_lines, R_hat_lines)
 
-    # Merged union blocks where at least one side changed
+    # Union of changed base intervals
     merged_union_intervals = _merged_union_change_intervals(O_vs_R, O_vs_R_hat)
 
-    # ---- Denominator (base-changes) via micro-boundaries on ORIGINAL projections
     denominator_base: int = 0
-    for union_start, union_end, boundary_points in _micro_boundaries_for_union(
-        merged_union_intervals, O_vs_R, O_vs_R_hat
-    ):
-        for micro_start, micro_end in zip(boundary_points[:-1], boundary_points[1:]):
-            if micro_start >= micro_end:
-                continue
-            R_piece = _project_base_subrange_to_target(
-                O_vs_R, R_lines, micro_start, micro_end
-            )
+    numerator_base_mutual_deletes: float = 0.0
+
+    # Per-base-line pass (for denom + mutual-deletes credit)
+    for union_start, union_end in merged_union_intervals:
+        for i in range(union_start, union_end):  # micro-slices [i, i+1)
+            R_piece = _project_base_subrange_to_target(O_vs_R, R_lines, i, i + 1)
             R_hat_piece = _project_base_subrange_to_target(
-                O_vs_R_hat, R_hat_lines, micro_start, micro_end
-            )
-            denominator_base += max(
-                micro_end - micro_start, len(R_piece), len(R_hat_piece)
+                O_vs_R_hat, R_hat_lines, i, i + 1
             )
 
-    # ---- Numerator (base-changes) via WHOLE-block alignment on EXPANDED projections
-    numerator_base: float = 0.0
-    expanded_R_projections = _expanded_projections_for_union(
-        O_vs_R, R_lines, merged_union_intervals
-    )
-    expanded_R_hat_projections = _expanded_projections_for_union(
-        O_vs_R_hat, R_hat_lines, merged_union_intervals
-    )
-    for index, (union_start, union_end) in enumerate(merged_union_intervals):
-        R_full_slice = _slice_from_expanded_projection(
-            expanded_R_projections[index], union_start, union_end
+            denominator_base += max(1, len(R_piece), len(R_hat_piece))
+
+            if not R_piece and not R_hat_piece:
+                # Both deleted/compressed this base line -> full agreement for this line
+                numerator_base_mutual_deletes += 1.0
+
+    # Whole-block content alignment (captures contained equalities like moved lines)
+    numerator_base_block_align: float = 0.0
+    for union_start, union_end in merged_union_intervals:
+        R_full = _project_base_subrange_to_target(
+            O_vs_R, R_lines, union_start, union_end
         )
-        R_hat_full_slice = _slice_from_expanded_projection(
-            expanded_R_hat_projections[index], union_start, union_end
+        R_hat_full = _project_base_subrange_to_target(
+            O_vs_R_hat, R_hat_lines, union_start, union_end
         )
-        numerator_base += _aligned_block_score(
-            R_full_slice, R_hat_full_slice, use_line_levenshtein
+        numerator_base_block_align += _aligned_block_score(
+            R_full, R_hat_full, use_line_levenshtein
         )
 
-    # ---- Insertions (slot union)
+    # Insertions (slot union)
     R_insertions_by_slot = _build_insertions_map(O_vs_R, R_lines)
     R_hat_insertions_by_slot = _build_insertions_map(O_vs_R_hat, R_hat_lines)
 
     denominator_insertions: int = 0
     numerator_insertions: float = 0.0
-    for slot_index in set(R_insertions_by_slot.keys()) | set(
-        R_hat_insertions_by_slot.keys()
-    ):
-        inserted_R_lines = R_insertions_by_slot.get(slot_index, [])
-        inserted_R_hat_lines = R_hat_insertions_by_slot.get(slot_index, [])
-        denominator_insertions += max(len(inserted_R_lines), len(inserted_R_hat_lines))
+    for slot in set(R_insertions_by_slot) | set(R_hat_insertions_by_slot):
+        ins_R = R_insertions_by_slot.get(slot, [])
+        ins_R_hat = R_hat_insertions_by_slot.get(slot, [])
+        denominator_insertions += max(len(ins_R), len(ins_R_hat))
         numerator_insertions += _aligned_block_score(
-            inserted_R_lines, inserted_R_hat_lines, use_line_levenshtein
+            ins_R, ins_R_hat, use_line_levenshtein
         )
 
     total_denominator = denominator_base + denominator_insertions
     if total_denominator == 0:
         return 1.0
 
-    score = (numerator_base + numerator_insertions) / total_denominator
+    numerator_total = (
+        numerator_base_mutual_deletes
+        + numerator_base_block_align
+        + numerator_insertions
+    )
+    score = numerator_total / total_denominator
     return max(0.0, min(1.0, score))
