@@ -284,100 +284,262 @@ def test_anchored_ratio_pure_insertions_one_common_one_unique():
 
 
 def test_anchored_ratio_empty_lines_are_ignored_1():
-    O = r"""BUILD_PASS3_CONSUMES= \
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "managementscriptingtools.resources|PASS3 \\\n\n"
+        "managementscriptingtools-gc|PASS3 \\\n\n"
+        "sharedlibraries|PASS3 \\\n\n"
+        "sharedlibraries.resources|PASS3 \\\n\n"
+        "sharedlibrariesfeature|PASS3 \\\n\n"
+        "webserver-events|PASS3 \\\n\n"
+        "webserver-events.resources|PASS3 \\\n\n"
+        "unpackx86csineutralrepository|PASS3 \\\n\n"
+        "unpackx86csiresourcerepositories|PASS3 \\\n\n"
+        "servercommon\\sharedlibraries-events|PASS3 \\\n\n"
+        "servercommon\\sharedlibraries-servercommon|PASS3 \\\n\n"
+        "servercommon\\sharedlibraries-servercommon.resources|PASS3 \\\n\n"
+        "\n\n"
+    )
 
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider|PASS3 \
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "something-long-setup-keep-this-line-managementscriptingtools-deployment|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "managementscriptingtools-gc|PASS3 \\\n\n"
+        "managementscriptingtools.resources|PASS3 \\\n\n"
+        "sharedlibraries|PASS3 \\\n\n"
+        "sharedlibraries.resources|PASS3 \\\n\n"
+        "sharedlibrariesfeature|PASS3 \\\n\n"
+        "webserver-events|PASS3 \\\n\n"
+        "webserver-events.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "unpackx86csineutralrepository|PASS3 \\\n\n"
+        "unpackx86csiresourcerepositories|PASS3 \\\n\n"
+        "servercommon\\sharedlibraries-events|PASS3 \\\n\n"
+        "servercommon\\sharedlibraries-servercommon|PASS3 \\\n\n"
+        "servercommon\\sharedlibraries-servercommon.resources|PASS3 \\\n\n"
+        "\n\n"
+    )
 
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider.resources|PASS3 \
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n"
+        "something-long-setup-keep-this-line-managementscriptingtools-deployment|PASS3 \\\n"
+        "managementscriptingtools|PASS3 \\\n"
+        "managementscriptingtools-gc|PASS3 \\\n"
+        "managementscriptingtools.resources|PASS3 \\\n"
+        "sharedlibraries|PASS3 \\\n"
+        "sharedlibraries.resources|PASS3 \\\n"
+        "sharedlibrariesfeature|PASS3 \\\n"
+        "webserver-events|PASS3 \\\n"
+        "webserver-events.resources|PASS3 \\\n"
+        "configuration.apphostfileprovider|PASS3 \\\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n"
+        "unpackx86csineutralrepository|PASS3 \\\n"
+        "unpackx86csiresourcerepositories|PASS3 \\\n"
+        "servercommon\\sharedlibraries-events|PASS3 \\\n"
+        "servercommon\\sharedlibraries-servercommon|PASS3 \\\n"
+        "servercommon\\sharedlibraries-servercommon.resources|PASS3 \\"
+    )
 
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider-comreg|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools.resources|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools-gc|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries.resources|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibrariesfeature|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events.resources|PASS3 \
-
-    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csineutralrepository|PASS3 \
-
-    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csiresourcerepositories|PASS3 \
-
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-events|PASS3 \
-
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon|PASS3 \
-
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon.resources|PASS3 \
-
-
-
-"""
-    R = r"""BUILD_PASS3_CONSUMES= \
-
-    inetsrv\iis\setup\mbs\compile\microsoft-windows-iis-managementscriptingtools-deployment|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools-gc|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools.resources|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries.resources|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibrariesfeature|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events.resources|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider-comreg|PASS3 \
-
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider.resources|PASS3 \
-
-    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csineutralrepository|PASS3 \
-
-    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csiresourcerepositories|PASS3 \
-
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-events|PASS3 \
-
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon|PASS3 \
-
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon.resources|PASS3
-
-
-
-"""
-
-    R_hat = r"""BUILD_PASS3_CONSUMES= \
-    inetsrv\iis\setup\mbs\compile\microsoft-windows-iis-managementscriptingtools-deployment|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools-gc|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-managementscriptingtools.resources|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries.resources|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibrariesfeature|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft-windows-iis-webserver-events.resources|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider-comreg|PASS3 \
-    inetsrv\iis\setup\mbs\microsoft.web.configuration.apphostfileprovider.resources|PASS3 \
-    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csineutralrepository|PASS3 \
-    mergedcomponents\merged\mbs\unpackx86repository\unpackx86csiresourcerepositories|PASS3 \
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-events|PASS3 \
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon|PASS3 \
-    servercommon\inetsrv\iis\setup\mbs\microsoft-windows-iis-sharedlibraries-servercommon.resources|PASS3"""
     score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
-    assert score == 1.0, "Expected 0 ÷ 0 → 1.0 when no one changes anything"
+    assert score == 1.0, "Expected 6 ÷ 6 → 1.0 when all changes are the same"
+
+
+def test_anchored_ratio_delete_vs_edit_1():
+    """
+    Delete 3 lines vs. edits same 3 lines
+    """
+
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Delete 3 lines after this line.
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Edits 3 lines after this line
+        "configuration.apphostfileprovider-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg-edit|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\"
+    )
+
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert score == 0.0, "Expected 0 ÷ 3 → 0.0 no same edits"
+
+
+def test_anchored_ratio_delete_vs_edit_2():
+    """
+    Delete 3 lines vs. edit 1 of those 3 lines
+    """
+
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Delete 3 lines after this line.
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Edits 1 line after this line
+        "configuration.apphostfileprovider-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\"
+    )
+
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert score == 0.0, "Expected 0 ÷ 3 → 0.0 no same edits"
+
+
+def test_anchored_ratio_delete_vs_edit_3():
+    """
+    Delete 3 lines vs. edit 1 middle line in those 3 lines
+    """
+
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Delete 3 lines after this line.
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Edits 1 line after this line
+        "configuration.apphostfileprovider-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\"
+    )
+
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert score == 0.0, "Expected 0 ÷ 3 → 0.0 no same edits"
+
+
+def test_anchored_ratio_delete_vs_edit_4():
+    """
+    Delete 3 lines vs. edit 2 lines in a row in those 3 lines
+    """
+
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Delete 3 lines after this line.
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"  # Edits 2 line after this line
+        "configuration.apphostfileprovider.resources-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg-edit|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\"
+    )
+
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert score == 0.0, "Expected 0 ÷ 3 → 0.0 no same edits"
+
+
+def test_anchored_ratio_delete_vs_edit_5():
+    """
+    Delete 3 lines vs. edit 2 non consecutive lines in those 3 lines
+    """
+
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Delete 3 lines after this line.
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider-edit|PASS3 \\\n\n"  # Edits 2 line after this line
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg-edit|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\"
+    )
+
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert score == 0.0, "Expected 0 ÷ 3 → 0.0 no same edits"
+
+
+def test_anchored_ratio_delete_vs_edit_6():
+    """
+    Delete 3 lines vs. edit 2 lines and delete 1 middle line
+    """
+
+    O = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"
+        "configuration.apphostfileprovider|PASS3 \\\n\n"
+        "configuration.apphostfileprovider.resources|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Delete 3 lines after this line.
+        "managementscriptingtools|PASS3 \\\n\n"
+        "\n\n"
+    )
+
+    R_hat = (
+        "BUILD_PASS3_CONSUMES= \\\n\n"  # Edit, delete, edit after this line
+        "configuration.apphostfileprovider-edit|PASS3 \\\n\n"
+        "configuration.apphostfileprovider-comreg-edit|PASS3 \\\n\n"
+        "managementscriptingtools|PASS3 \\"
+    )
+
+    score = anchored_ratio(O, R, R_hat, use_line_levenshtein=True)
+    assert (
+        score == 1 / 3
+    ), "Expected 1 ÷ 3 → 0.3333. 1 same delete out of 3 changed lines"

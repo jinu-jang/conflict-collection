@@ -1,22 +1,17 @@
 """Anchored 3-way similarity ratio.
 
-The :func:`anchored_ratio` function computes a normalised similarity score in ``[0,1]``
-between two edited versions (``R`` and ``R_hat``) with respect to a common base ``O``.
+The :func:`anchored_ratio` function computes a normalised similarity score in [0,1]
+between two edited versions (R and R_hat) with respect to a common base O.
 It jointly reasons about:
-
 * Base-anchored change intervals (replacements / expansions / compressions)
 * Insertions at base slots
 * Optional per-line Levenshtein similarity for partial replacements
 
 Design goals:
-
 1. Reward agreement only inside regions where at least one side changed.
 2. Distinguish identical insertions in the same slot from insertions in different slots.
 3. Provide a tunable granularity (exact-only vs Levenshtein) without changing semantics.
 4. Define the degenerate case (no changes) as 1.0 for stability.
-
-This is useful for evaluating convergence of independent merge resolution attempts
-or measuring how close an automated merge is to a human resolution.
 """
 
 from difflib import SequenceMatcher
@@ -51,7 +46,6 @@ def _line_similarity(a: str, b: str, use_line_levenshtein: bool) -> float:
         return 1.0
     if not use_line_levenshtein:
         return 0.0
-
     return float(levenshtein_ratio(a, b))
 
 
@@ -133,12 +127,12 @@ def _micro_boundaries_for_union(
     results: list[Tuple[int, int, list[int]]] = []
     for union_start, union_end in merged_union_intervals:
         boundary_points = {union_start, union_end}
-        for tag, base_start, base_end, _, _ in O_vs_R:
+        for _, base_start, base_end, _, _ in O_vs_R:
             if union_start < base_start < union_end:
                 boundary_points.add(base_start)
             if union_start < base_end < union_end:
                 boundary_points.add(base_end)
-        for tag, base_start, base_end, _, _ in O_vs_R_hat:
+        for _, base_start, base_end, _, _ in O_vs_R_hat:
             if union_start < base_start < union_end:
                 boundary_points.add(base_start)
             if union_start < base_end < union_end:
@@ -191,44 +185,6 @@ def _project_base_subrange_to_target(
     return projected_output
 
 
-def _expanded_projections_for_union(
-    O_vs_target: list[Tuple[Tag, int, int, int, int]],
-    target_lines: list[str],
-    merged_union_intervals: list[Tuple[int, int]],
-) -> list[Tuple[int, int, list[str]]]:
-    """
-    For each merged union block [union_start, union_end), precompute the FULL projected slice
-    (concatenating across opcodes). These are used:
-      (a) as whole-block inputs to the numerator alignment,
-      (b) for proportional cutting into micro-slices if needed.
-    """
-    expanded_projections: list[Tuple[int, int, list[str]]] = []
-    for union_start, union_end in merged_union_intervals:
-        full_projection = _project_base_subrange_to_target(
-            O_vs_target, target_lines, union_start, union_end
-        )
-        expanded_projections.append((union_start, union_end, full_projection))
-    return expanded_projections
-
-
-def _slice_from_expanded_projection(
-    expanded_projection: Tuple[int, int, list[str]],
-    base_slice_start: int,
-    base_slice_end: int,
-) -> list[str]:
-    """
-    Cut [base_slice_start, base_slice_end) out of a pre-expanded union block proportionally.
-    """
-    union_start, union_end, full_projected_lines = expanded_projection
-    projected_length = len(full_projected_lines)
-    union_span = union_end - union_start
-    if union_span <= 0:
-        return []
-    projected_from = ((base_slice_start - union_start) * projected_length) // union_span
-    projected_to = ((base_slice_end - union_start) * projected_length) // union_span
-    return full_projected_lines[projected_from:projected_to]
-
-
 # ----------------------------
 # Insertions per base slot
 # ----------------------------
@@ -243,7 +199,7 @@ def _build_insertions_map(
     A slot index i means “before base line i” (0..N) where N is len(base).
     """
     insertions_by_slot: Dict[int, list[str]] = {}
-    for tag, base_start, base_end, target_start, target_end in O_vs_target:
+    for tag, base_start, _, target_start, target_end in O_vs_target:
         if tag == "insert":
             insertions_by_slot.setdefault(base_start, []).extend(
                 target_lines[target_start:target_end]
@@ -264,11 +220,11 @@ def anchored_ratio(
 
     Denominator =
         sum over micro-boundaries (inside each merged union block [union_start, union_end)) of
-            max( base_span_len, len(R_piece), len(R_hat_piece) )
+            max( len(R_piece), len(R_hat_piece) )
       + sum over insertion slots of max( #insertions_R, #insertions_R_hat )
 
     Numerator =
-        sum over merged union blocks [union_start, union_end) of aligned score between the FULL projected slices
+        sum over merged union blocks [union_start, union_end) of aligned score between the projected slices
         (re-align R[union_block] vs R_hat[union_block] with SequenceMatcher; equal lines = 1, replace = per-line sim)
       + sum over insertion slots of aligned score between inserted lines
 
@@ -288,7 +244,7 @@ def anchored_ratio(
     # Merged union blocks where at least one side changed
     merged_union_intervals = _merged_union_change_intervals(O_vs_R, O_vs_R_hat)
 
-    # ---- Denominator (base-changes) via micro-boundaries on ORIGINAL projections
+    # ---- Denominator (base changes) via micro-boundaries on projections
     denominator_base: int = 0
     for union_start, union_end, boundary_points in _micro_boundaries_for_union(
         merged_union_intervals, O_vs_R, O_vs_R_hat
@@ -304,20 +260,14 @@ def anchored_ratio(
             )
             denominator_base += max(len(R_piece), len(R_hat_piece))
 
-    # ---- Numerator (base-changes) via WHOLE-block alignment on EXPANDED projections
+    # ---- Numerator (base changes) via direct projections
     numerator_base: float = 0.0
-    expanded_R_projections = _expanded_projections_for_union(
-        O_vs_R, R_lines, merged_union_intervals
-    )
-    expanded_R_hat_projections = _expanded_projections_for_union(
-        O_vs_R_hat, R_hat_lines, merged_union_intervals
-    )
-    for index, (union_start, union_end) in enumerate(merged_union_intervals):
-        R_full_slice = _slice_from_expanded_projection(
-            expanded_R_projections[index], union_start, union_end
+    for union_start, union_end in merged_union_intervals:
+        R_full_slice = _project_base_subrange_to_target(
+            O_vs_R, R_lines, union_start, union_end
         )
-        R_hat_full_slice = _slice_from_expanded_projection(
-            expanded_R_hat_projections[index], union_start, union_end
+        R_hat_full_slice = _project_base_subrange_to_target(
+            O_vs_R_hat, R_hat_lines, union_start, union_end
         )
         numerator_base += _aligned_block_score(
             R_full_slice, R_hat_full_slice, use_line_levenshtein
@@ -329,9 +279,8 @@ def anchored_ratio(
 
     denominator_insertions: int = 0
     numerator_insertions: float = 0.0
-    for slot_index in set(R_insertions_by_slot.keys()) | set(
-        R_hat_insertions_by_slot.keys()
-    ):
+    all_slots = set(R_insertions_by_slot) | set(R_hat_insertions_by_slot)
+    for slot_index in all_slots:
         inserted_R_lines = R_insertions_by_slot.get(slot_index, [])
         inserted_R_hat_lines = R_hat_insertions_by_slot.get(slot_index, [])
         denominator_insertions += max(len(inserted_R_lines), len(inserted_R_hat_lines))
