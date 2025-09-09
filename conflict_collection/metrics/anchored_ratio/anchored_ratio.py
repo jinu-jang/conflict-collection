@@ -94,10 +94,10 @@ def _merged_union_change_intervals(
 
     # Scan both to collect change intervals (in base)
     for tag, base_start, base_end, _, _ in O_vs_R:
-        if tag != "equal" and base_start < base_end:
+        if tag != "equal":
             change_intervals.append((base_start, base_end))
     for tag, base_start, base_end, _, _ in O_vs_R_hat:
-        if tag != "equal" and base_start < base_end:
+        if tag != "equal":
             change_intervals.append((base_start, base_end))
 
     if not change_intervals:
@@ -226,9 +226,10 @@ def anchored_ratio(
 
     denominator_base: int = 0
     numerator_base_mutual_deletes: float = 0.0
+    numerator_base_block_align: float = 0.0
 
-    # Per-base-line pass (for denom + mutual-deletes credit)
     for union_start, union_end in merged_union_intervals:
+        # Per-base-line pass (for denom + mutual-deletes credit)
         for i in range(union_start, union_end):  # micro-slices [i, i+1)
             R_piece = _project_base_subrange_to_target(O_vs_R, R_lines, i, i + 1)
             R_hat_piece = _project_base_subrange_to_target(
@@ -241,9 +242,7 @@ def anchored_ratio(
                 # Both deleted/compressed this base line -> full agreement for this line
                 numerator_base_mutual_deletes += 1.0
 
-    # Whole-block content alignment (captures contained equalities like moved lines)
-    numerator_base_block_align: float = 0.0
-    for union_start, union_end in merged_union_intervals:
+        # Whole-block content alignment (captures contained equalities like moved lines)
         R_full = _project_base_subrange_to_target(
             O_vs_R, R_lines, union_start, union_end
         )
