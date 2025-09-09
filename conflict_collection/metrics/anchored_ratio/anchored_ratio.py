@@ -14,7 +14,7 @@ Design goals:
 4. Define the degenerate case (no changes) as 1.0 for stability.
 """
 
-from difflib import SequenceMatcher, unified_diff
+from difflib import SequenceMatcher
 from typing import Dict, Literal, Tuple
 
 from Levenshtein import ratio as levenshtein_ratio
