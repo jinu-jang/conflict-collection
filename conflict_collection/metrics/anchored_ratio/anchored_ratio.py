@@ -210,12 +210,12 @@ def anchored_ratio(
 
     If total denominator == 0, returns 1.0.
     """
-    if R == R_hat:
-        return 1.0
-
     base_lines: list[str] = _remove_empty_lines(O)
     R_lines: list[str] = _remove_empty_lines(R)
     R_hat_lines: list[str] = _remove_empty_lines(R_hat)
+
+    if R_lines == R_hat_lines:
+        return 1.0
 
     # Opcodes
     O_vs_R = _opcodes(base_lines, R_lines)
